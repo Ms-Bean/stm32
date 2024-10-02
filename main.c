@@ -47,9 +47,7 @@ int main(void)
     }
 
     lcd_gpio_init();
-    lcd_write_instruction(0x03);
-    lcd_write_instruction(0x04);
-    
+    lcd_init();
     for(;;);
 
     return 0;
@@ -129,13 +127,43 @@ void lcd_write_nibble(uint8_t nibble, int is_data)
     /*Wait a minimum of 10 + 400 nanoseconds (address hold time + E cycle time) */
     delay_milliseconds(1);
 }
+void lcd_write(uint8_t instruction, int is_data)
+{
+    lcd_write_nibble(instruction >> 4, is_data);
+    lcd_write_nibble(instruction & 0x0F, is_data);
+}
 void lcd_init(void)
 {
-    /* See page 11 of TC1602A-09T */
+    /* See page 12 of TC1602A-09T */
     
-    delay_milliseconds(20); /*Wait for at least 15 ms after power on*/
+    delay_milliseconds(40); 
+    lcd_write(0x03, 0); /* Wake up */
+    delay_milliseconds(5); 
+    lcd_write(0x03, 0); /* Wake up */
+    delay_milliseconds(1); 
+    lcd_write(0x03, 0); /* Wake up */
 
-}
+    /*
+        function set
+        4 bit mode (DL=0)
+        2 lines (N=1)
+        5x10 dots (F=1)
+    */
+    lcd_write(0x2C, 0);
+
+    /*display off*/
+    lcd_write(0x08, 0);
+
+    /*display clear*/
+    lcd_write(0x01, 0);
+
+    /*
+        entry mode set
+        increment cursor position (I/D = 1)
+        no shift (S = 0)
+    */
+    lcd_write(0x06, 0);
+} 
 void assert_failed(uint8_t *file, uint32_t line)
 {
         for(;;);
