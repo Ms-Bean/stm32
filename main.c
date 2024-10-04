@@ -1,7 +1,6 @@
 #include <stm32f10x.h>
 #include <stm32f10x_rcc.h>
 #include <stm32f10x_gpio.h>
-#include <stm32f10x_spi.h>
 
 #define LCD_RS GPIO_Pin_1
 #define LCD_RS_PORT GPIOA
@@ -34,6 +33,7 @@ void delay_milliseconds(uint32_t milliseconds)
 
 void lcd_gpio_init(void);
 void lcd_write_nibble(uint8_t nibble, int is_data);
+void lcd_write(uint8_t instruction, int is_data);
 void lcd_init(void);
 
 int main(void)
@@ -46,8 +46,13 @@ int main(void)
         for(;;);
     }
 
-    lcd_gpio_init();
     lcd_init();
+
+    lcd_write(0xB5, 1);
+    lcd_write(0xCA, 1);
+    lcd_write(0xD6, 1);
+    lcd_write(0xB0, 1);
+
     for(;;);
 
     return 0;
@@ -137,32 +142,32 @@ void lcd_init(void)
     /* See page 12 of TC1602A-09T */
     
     delay_milliseconds(40); 
-    lcd_write(0x03, 0); /* Wake up */
+    lcd_write(0x33, 0); /* Wake up */
     delay_milliseconds(5); 
-    lcd_write(0x03, 0); /* Wake up */
+    lcd_write(0x32, 0); /* Wake up */
     delay_milliseconds(1); 
-    lcd_write(0x03, 0); /* Wake up */
 
     /*
         function set
         4 bit mode (DL=0)
         2 lines (N=1)
-        5x10 dots (F=1)
+        5x8 dots 
     */
-    lcd_write(0x2C, 0);
+    lcd_write(0x28, 0);
 
-    /*display off*/
-    lcd_write(0x08, 0);
-
-    /*display clear*/
-    lcd_write(0x01, 0);
-
+    /*display on*/
+    lcd_write(0x0C, 0);
+    
     /*
         entry mode set
         increment cursor position (I/D = 1)
         no shift (S = 0)
     */
     lcd_write(0x06, 0);
+
+    /*display clear*/
+    lcd_write(0x01, 0);
+
 } 
 void assert_failed(uint8_t *file, uint32_t line)
 {
